@@ -24,7 +24,8 @@ dependencies = [
     "python-dotenv",
     "asyncpg",
     "PyYAML",
-    "requests"
+    "requests",
+    "sentence-transformers"
 ]
 
 [project.optional-dependencies]
