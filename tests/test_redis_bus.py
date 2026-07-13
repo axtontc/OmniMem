@@ -65,9 +65,10 @@ async def test_schema_validation_and_subscription():
     subscriber.pubsub.listen = mock_listen
     
     try:
-        async with asyncio.timeout(2.0):
+        async def fetch_one():
             async for msg in subscriber.listen(AgentSwarmMessage):
                 break
+        await asyncio.wait_for(fetch_one(), timeout=2.0)
     except asyncio.TimeoutError as e:
         print(f"Timeout (expected if no more messages): {e}")
 
@@ -77,9 +78,10 @@ async def test_schema_validation_and_subscription():
     subscriber.pubsub.listen = mock_bad_listen
     
     try:
-        async with asyncio.timeout(2.0):
+        async def fetch_bad():
             async for msg in subscriber.listen(AgentSwarmMessage):
                 break
+        await asyncio.wait_for(fetch_bad(), timeout=2.0)
     except ContractViolationError as e:
         print(f"Caught violation (expected): {e}")
     except asyncio.TimeoutError as e:

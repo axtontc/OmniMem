@@ -16,7 +16,13 @@ class MockMemoryRouter:
 @pytest.mark.asyncio
 async def test_successful_ingestion_latency():
     import omnimem.api
-    omnimem.api.embedding_model = True  # Mock the model loading
+    class MockModel:
+        def encode(self, content):
+            class MockArray:
+                def tolist(self): return [0.1] * 384
+            return MockArray()
+            
+    omnimem.api.embedding_model = MockModel()
     
     redis_bus = MockRedisBus()
     router = MockMemoryRouter()

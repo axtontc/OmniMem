@@ -67,7 +67,8 @@ async def test_search_semantic_memory(mock_pool):
     ]
     
     mock_acquire = AsyncMock()
-    mock_acquire.__aenter__.return_value = mock_conn
+    mock_acquire.__aenter__ = AsyncMock(return_value=mock_conn)
+    mock_acquire.__aexit__ = AsyncMock(return_value=None)
     mock_pool.acquire.return_value = mock_acquire
     
     results = await db.search_semantic_memory([0.1] * 384, limit=5)
