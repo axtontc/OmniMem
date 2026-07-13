@@ -36,7 +36,7 @@ async def test_store_semantic_memory(mock_pool):
     data = SemanticMemoryCreate(
         concept_name="test_concept",
         text_content="This is a test concept",
-        embedding=[0.1] * 1536,
+        embedding=[0.1] * 384,
         metadata={"source": "test"}
     )
     
@@ -58,14 +58,14 @@ async def test_search_semantic_memory(mock_pool):
             "id": "123e4567-e89b-12d3-a456-426614174000",
             "concept_name": "test_concept",
             "text_content": "This is a test concept",
-            "embedding": [0.1] * 1536,
+            "embedding": [0.1] * 384,
             "metadata": '{"source": "test"}',
             "created_at": datetime.datetime.now(datetime.timezone.utc),
             "updated_at": datetime.datetime.now(datetime.timezone.utc)
         }
     ]
     
-    results = await db.search_semantic_memory([0.1] * 1536, limit=5)
+    results = await db.search_semantic_memory([0.1] * 384, limit=5)
     assert len(results) == 1
     assert results[0].concept_name == "test_concept"
     mock_pool.fetch.assert_called_once()
@@ -81,7 +81,7 @@ async def test_database_integrity_error_propagation(mock_pool):
         agent_id="agent_1",
         event_type="thought",
         event_content="Thinking...",
-        embedding=[0.2] * 1536
+        embedding=[0.2] * 384
     )
     
     with pytest.raises(DatabaseIntegrityError):

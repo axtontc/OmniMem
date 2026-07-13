@@ -62,9 +62,9 @@ class ContextIngestionPipeline:
     async def _stream_to_router(self, artifact: ArtifactPayload) -> None:
         """Stream to T9 Memory Router."""
         import asyncio
-        # We can dynamically import the embedding_model from api to avoid circular imports, 
+        # We can dynamically import the embedding_model from api to avoid circular imports,
         # or just instantiate a new one. Since api.py has it loaded, let's fetch it.
-        from api import embedding_model
+        from omnimem.api import embedding_model
         
         if not embedding_model:
             raise ContractViolationError("Embedding model not loaded")
