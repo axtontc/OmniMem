@@ -8,3 +8,8 @@ pydantic-settings==2.2.1
 python-dotenv==1.0.1
 fastapi
 uvicorn
+asyncpg
+PyYAML
+requests
+pytest
+pytest-asyncio

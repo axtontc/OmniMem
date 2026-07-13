@@ -21,7 +21,16 @@ dependencies = [
     "neo4j",
     "psycopg2-binary",
     "pgvector",
-    "python-dotenv"
+    "python-dotenv",
+    "asyncpg",
+    "PyYAML",
+    "requests"
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-asyncio"
 ]
 
 [project.scripts]

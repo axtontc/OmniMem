@@ -1,7 +1,7 @@
 import asyncio
 from neo4j import GraphDatabase
 from omnimem.pgvector_layer import MemoryDB, SemanticMemoryCreate
-from mock_deps import Entity, Relation
+from omnimem.mock_deps import Entity, Relation
 from omnimem.neo4j_mapping import Neo4jMappingLayer
 
 async def main():

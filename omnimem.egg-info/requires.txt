@@ -7,3 +7,10 @@ neo4j
 psycopg2-binary
 pgvector
 python-dotenv
+asyncpg
+PyYAML
+requests
+
+[test]
+pytest
+pytest-asyncio
