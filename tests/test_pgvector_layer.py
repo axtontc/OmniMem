@@ -15,6 +15,7 @@ def mock_pool():
     pool.execute = AsyncMock()
     pool.fetchval = AsyncMock()
     pool.fetch = AsyncMock()
+    pool.acquire = MagicMock()
     return pool
 
 @pytest.mark.asyncio
@@ -74,13 +75,14 @@ async def test_search_semantic_memory(mock_pool):
         async def __aexit__(self, exc_type, exc_val, exc_tb):
             pass
             
+    mock_conn.transaction = MagicMock(return_value=AsyncContextManagerMock(None))
     mock_pool.acquire.return_value = AsyncContextManagerMock(mock_conn)
     
     results = await db.search_semantic_memory([0.1] * 384, limit=5)
     assert len(results) == 1
     assert results[0].concept_name == "test_concept"
     mock_conn.fetch.assert_called_once()
-    assert "ORDER BY embedding <->" in mock_conn.fetch.call_args[0][0]
+    assert "ORDER BY embedding <=>" in mock_conn.fetch.call_args[0][0]
 
 @pytest.mark.asyncio
 async def test_database_integrity_error_propagation(mock_pool):
