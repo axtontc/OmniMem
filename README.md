@@ -11,6 +11,10 @@
   <img src="https://img.shields.io/badge/License-Non--Commercial-red?style=for-the-badge" alt="License" />
 </p>
 
+<p align="center">
+  <b>Tags:</b> <code>pgvector</code> <code>postgresql</code> <code>semantic-search</code> <code>memory-injection</code> <code>agentic-memory</code>
+</p>
+
 </div>
 
 ---
