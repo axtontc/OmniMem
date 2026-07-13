@@ -1,38 +1,94 @@
-# 🧠 OmniMem: The Unified Memory Engine
-
 <div align="center">
-  <img src="https://img.shields.io/badge/Python-3.10%2B-blue" />
-  <img src="https://img.shields.io/badge/PostgreSQL-PgVector-blue" />
-  <img src="https://img.shields.io/badge/Neo4j-Graph-blue" />
-  <img src="https://img.shields.io/badge/Redis-PubSub-red" />
-  <img src="https://img.shields.io/badge/Celery-Distributed-green" />
+
+# 🌐 OmniMem
+**The Enterprise Graph-Vector Storage Engine for Infinite Agent Memory**
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
+  <img src="https://img.shields.io/badge/PostgreSQL-PgVector-blue?style=for-the-badge&logo=postgresql&logoColor=white" alt="PgVector" />
+  <img src="https://img.shields.io/badge/Neo4j-Graph_DB-008CC1?style=for-the-badge&logo=neo4j&logoColor=white" alt="Neo4j" />
+  <img src="https://img.shields.io/badge/Status-Production_Ready-success?style=for-the-badge" alt="Production Ready" />
+  <img src="https://img.shields.io/badge/License-Non--Commercial-red?style=for-the-badge" alt="License" />
+</p>
+
 </div>
 
-**OmniMem** is an enterprise-grade hybrid memory engine designed for massive AI agent swarms. It combines **Dense Semantic Memory** via PostgreSQL (`pgvector`), **Topological Graph Memory** via Neo4j, and **Ultra-Low Latency State Syncing** via Redis Pub/Sub.
+---
 
-## Core Features
-1. **Hybrid Retrieval**: Queries execute across dense vectors (PgVector) and graph topology (Neo4j) concurrently.
-2. **Strict API Firewalls**: Zero direct database writes. All writes flow through Celery workers (`Z_1`) and the Memory Router (`Z_2`).
-3. **WAL & IPC Safety**: Utilizes Write-Ahead Logs with strict OS-level binary locks (`msvcrt.locking` on Windows, `fcntl.flock` on Unix) to prevent multi-agent race conditions.
-4. **SML Protocol**: Native support for the Swarm Machine Language (SML) for deterministic inter-agent memory sharing.
+## ⚡ What is OmniMem?
 
-## Quick Start (Docker Compose)
+**OmniMem** is an industrial-grade backend data ingestion pipeline designed for infinite autonomous memory. It bridges the gap between semantic similarity (Vector Databases) and structural relationships (Graph Databases).
 
-OmniMem requires a heavy-duty backend infrastructure. We bundle a `docker-compose.yml` to spin up Neo4j, PgVector, and Redis instantly.
+Built on FastAPI and Celery, OmniMem ingests raw text, codebases, and massive datasets, instantly converting them into high-dimensional embeddings via `PgVector` while simultaneously linking their ontological relationships in `Neo4j`.
 
-```bash
-# 1. Install the CLI
-pip install .
+### 🌟 Enterprise Features
 
-# 2. Spin up the infrastructure
-omnimem up
+- **🛡️ Graph-Vector Hybrid Engine**: Query memories by semantic similarity (PgVector) AND relational taxonomy (Neo4j) for hallucination-free retrieval.
+- **⚡ High-Throughput Ingestion**: FastAPI gateway backed by a Redis/Celery asynchronous task queue capable of parsing gigabytes of raw knowledge.
+- **🚀 Docker-Native Orchestration**: Spins up PostgreSQL, Neo4j, Redis, Celery Workers, and the API Gateway in a single cohesive `docker-compose` cluster.
+- **🔍 Intelligent Ontology Mapping**: Automatically extracts named entities and structural nodes during ingestion to build an ever-expanding graph of ground-truth knowledge.
 
-# 3. Start the Celery distributed workers
-omnimem worker
+---
 
-# 4. Start the FastAPI Memory Router
-omnimem server
+## 🏗️ Architecture
+
+```mermaid
+graph TD
+    Client[External Agents / AutoMem] -->|REST API| API[FastAPI Gateway]
+    API -->|Enqueue Task| Redis[(Redis Broker)]
+    Redis --> Worker[Celery Worker Cluster]
+    Worker -->|Embeddings| Pg[(PostgreSQL + PgVector)]
+    Worker -->|Entity Extraction| Graph[(Neo4j Graph)]
+    
+    API -->|Hybrid Query| Pg
+    API -->|Hybrid Query| Graph
 ```
 
-## Continuous Integration
-This repository includes a fully-automated GitHub Actions pipeline (`.github/workflows/test.yml`) that spins up the full Docker infrastructure and executes the rigorous end-to-end test suite on every PR to guarantee absolute systemic integrity.
+---
+
+## 🚀 Quick Start
+
+### Installation
+
+```bash
+git clone https://github.com/axtontc/omnimem.git
+cd omnimem
+pip install .
+```
+
+### Starting the Cluster
+
+Deploy the entire microservice architecture with one command:
+
+```bash
+omnimem up
+```
+*(This automatically spawns Postgres, Neo4j, Redis, the API, and Celery Workers).*
+
+---
+
+## ⚙️ Configuration & Advanced Usage
+
+<details>
+<summary><b>Click to expand advanced CLI options</b></summary>
+
+You can explicitly control the microservices if you prefer not to use `omnimem up`:
+
+- **Start API Server Only**: `omnimem server`
+- **Start Celery Worker Only**: `omnimem worker`
+- **Database URIs**: Configured internally via `.env` but defaults to standard Docker ports (5432, 7687, 6379, 8000).
+
+</details>
+
+---
+
+## 🔒 Licensing & Enterprise Support
+
+> [!CAUTION]
+> **Commercial Use Prohibited**
+> 
+> OmniMem is dual-licensed. This public repository is distributed under the **PolyForm Noncommercial License 1.0.0**. You are free to use, modify, and distribute this software for personal, hobbyist, and academic non-profit use.
+>
+> **You may NOT use this software for commercial purposes or within a corporate enterprise environment without purchasing a commercial license.**
+>
+> If you are a corporation interested in leveraging OmniMem for your data pipelines, please contact **Axton Carroll** for commercial licensing and dedicated enterprise support.
