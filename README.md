@@ -25,7 +25,7 @@
 
 Built on FastAPI and Celery, OmniMem ingests raw text, codebases, and massive datasets, instantly converting them into high-dimensional embeddings via `PgVector` while simultaneously linking their ontological relationships in `Neo4j`.
 
-### 🌟 Enterprise Features
+### 🌟 Features
 
 - **🛡️ Graph-Vector Hybrid Engine**: Query memories by semantic similarity (PgVector) AND relational taxonomy (Neo4j) for hallucination-free retrieval.
 - **⚡ High-Throughput Ingestion**: FastAPI gateway backed by a Redis/Celery asynchronous task queue capable of parsing gigabytes of raw knowledge.
