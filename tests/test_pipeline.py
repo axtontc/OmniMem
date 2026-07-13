@@ -9,9 +9,9 @@ class MockRedisBus:
         await asyncio.sleep(0.001)
 
 class MockMemoryRouter:
-    async def route(self, payload: dict) -> None:
+    def route_memory(self, payload: dict) -> None:
         # Simulate router hand-off latency < 5ms
-        await asyncio.sleep(0.002)
+        time.sleep(0.002)
 
 @pytest.mark.asyncio
 async def test_successful_ingestion_latency():

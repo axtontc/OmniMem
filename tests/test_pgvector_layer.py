@@ -66,10 +66,15 @@ async def test_search_semantic_memory(mock_pool):
         }
     ]
     
-    mock_acquire = AsyncMock()
-    mock_acquire.__aenter__ = AsyncMock(return_value=mock_conn)
-    mock_acquire.__aexit__ = AsyncMock(return_value=None)
-    mock_pool.acquire.return_value = mock_acquire
+    class AsyncContextManagerMock:
+        def __init__(self, conn):
+            self.conn = conn
+        async def __aenter__(self):
+            return self.conn
+        async def __aexit__(self, exc_type, exc_val, exc_tb):
+            pass
+            
+    mock_pool.acquire.return_value = AsyncContextManagerMock(mock_conn)
     
     results = await db.search_semantic_memory([0.1] * 384, limit=5)
     assert len(results) == 1
