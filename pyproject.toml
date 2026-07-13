@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "omnimem"
+version = "1.0.0"
+description = "Omni-Mem Hybrid Memory Engine (PgVector, Neo4j, Redis, Celery)."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "Axton Carroll" }
+]
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pydantic",
+    "celery",
+    "redis",
+    "neo4j",
+    "psycopg2-binary",
+    "pgvector",
+    "python-dotenv"
+]
+
+[project.scripts]
+omnimem = "omnimem.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["omnimem", "omnimem.*"]

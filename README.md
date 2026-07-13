@@ -1,0 +1,38 @@
+# 🧠 OmniMem: The Unified Memory Engine
+
+<div align="center">
+  <img src="https://img.shields.io/badge/Python-3.10%2B-blue" />
+  <img src="https://img.shields.io/badge/PostgreSQL-PgVector-blue" />
+  <img src="https://img.shields.io/badge/Neo4j-Graph-blue" />
+  <img src="https://img.shields.io/badge/Redis-PubSub-red" />
+  <img src="https://img.shields.io/badge/Celery-Distributed-green" />
+</div>
+
+**OmniMem** is an enterprise-grade hybrid memory engine designed for massive AI agent swarms. It combines **Dense Semantic Memory** via PostgreSQL (`pgvector`), **Topological Graph Memory** via Neo4j, and **Ultra-Low Latency State Syncing** via Redis Pub/Sub.
+
+## Core Features
+1. **Hybrid Retrieval**: Queries execute across dense vectors (PgVector) and graph topology (Neo4j) concurrently.
+2. **Strict API Firewalls**: Zero direct database writes. All writes flow through Celery workers (`Z_1`) and the Memory Router (`Z_2`).
+3. **WAL & IPC Safety**: Utilizes Write-Ahead Logs with strict OS-level binary locks (`msvcrt.locking` on Windows, `fcntl.flock` on Unix) to prevent multi-agent race conditions.
+4. **SML Protocol**: Native support for the Swarm Machine Language (SML) for deterministic inter-agent memory sharing.
+
+## Quick Start (Docker Compose)
+
+OmniMem requires a heavy-duty backend infrastructure. We bundle a `docker-compose.yml` to spin up Neo4j, PgVector, and Redis instantly.
+
+```bash
+# 1. Install the CLI
+pip install .
+
+# 2. Spin up the infrastructure
+omnimem up
+
+# 3. Start the Celery distributed workers
+omnimem worker
+
+# 4. Start the FastAPI Memory Router
+omnimem server
+```
+
+## Continuous Integration
+This repository includes a fully-automated GitHub Actions pipeline (`.github/workflows/test.yml`) that spins up the full Docker infrastructure and executes the rigorous end-to-end test suite on every PR to guarantee absolute systemic integrity.
