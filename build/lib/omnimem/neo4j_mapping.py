@@ -1,6 +1,6 @@
 import re
 from typing import Tuple, Dict, Any, List
-from omnimem.mock_deps import Entity, Relation, ProceduralKnowledge, ContractViolationError
+from omnimem.models import Entity, Relation, ProceduralKnowledge, ContractViolationError
 
 class Neo4jMappingLayer:
     """

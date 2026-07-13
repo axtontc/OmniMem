@@ -1,4 +1,4 @@
-from omnimem.mock_deps import Entity, Relation, ProceduralKnowledge
+from omnimem.models import Entity, Relation, ProceduralKnowledge
 from omnimem.neo4j_mapping import Neo4jMappingLayer
 
 def test_entity():

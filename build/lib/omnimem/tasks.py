@@ -4,7 +4,7 @@ from omnimem.exceptions import ContractViolationError
 from omnimem.ipc_wal import AsyncWAL
 from omnimem.pgvector_layer import MemoryDB
 from omnimem.neo4j_mapping import Neo4jMappingLayer
-from omnimem.mock_deps import Entity, Relation
+from omnimem.models import Entity, Relation
 import os
 
 wal = AsyncWAL(wal_dir=os.path.join(os.path.dirname(__file__), "wal_logs"))

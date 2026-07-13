@@ -7,7 +7,7 @@ from typing import List, Dict, Any
 from omnimem.pgvector_layer import MemoryDB
 from omnimem.neo4j_layer import Neo4jDatabase
 from omnimem.neo4j_mapping import Neo4jMappingLayer
-from omnimem.mock_deps import Entity, Relation
+from omnimem.models import Entity, Relation
 
 # Configuration
 OLLAMA_URL = "http://localhost:11434"
