@@ -52,8 +52,9 @@ async def test_store_semantic_memory(mock_pool):
 @pytest.mark.asyncio
 async def test_search_semantic_memory(mock_pool):
     db = MemoryDB(mock_pool)
-    # Mock return value of fetch
-    mock_pool.fetch.return_value = [
+    
+    mock_conn = AsyncMock()
+    mock_conn.fetch.return_value = [
         {
             "id": "123e4567-e89b-12d3-a456-426614174000",
             "concept_name": "test_concept",
@@ -65,11 +66,15 @@ async def test_search_semantic_memory(mock_pool):
         }
     ]
     
+    mock_acquire = AsyncMock()
+    mock_acquire.__aenter__.return_value = mock_conn
+    mock_pool.acquire.return_value = mock_acquire
+    
     results = await db.search_semantic_memory([0.1] * 384, limit=5)
     assert len(results) == 1
     assert results[0].concept_name == "test_concept"
-    mock_pool.fetch.assert_called_once()
-    assert "ORDER BY embedding <->" in mock_pool.fetch.call_args[0][0]
+    mock_conn.fetch.assert_called_once()
+    assert "ORDER BY embedding <->" in mock_conn.fetch.call_args[0][0]
 
 @pytest.mark.asyncio
 async def test_database_integrity_error_propagation(mock_pool):

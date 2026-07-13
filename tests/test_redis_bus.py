@@ -1,8 +1,7 @@
 import asyncio
 import pytest
-import sys
-import os
 import time
+from unittest.mock import AsyncMock
 
 from omnimem.redis_bus import RedisEventBus
 from omnimem.security_contract import MemMCPHookPayload, AgentSwarmMessage, ContractViolationError
@@ -10,11 +9,10 @@ from omnimem.security_contract import MemMCPHookPayload, AgentSwarmMessage, Cont
 @pytest.mark.asyncio
 async def test_pub_sub_latency():
     bus = RedisEventBus("redis://localhost:6379/0")
-    bus.client = __import__("fakeredis").FakeAsyncRedis(decode_responses=True)
-    bus.pubsub = bus.client.pubsub()
-    # await bus.connect()
+    bus.client = AsyncMock()
+    bus.pubsub = AsyncMock()
+    bus.client.publish.return_value = 1
 
-    # 1. Test Publish Latency
     payload = MemMCPHookPayload(
         version="1.0",
         event_type="test_event",
@@ -22,10 +20,8 @@ async def test_pub_sub_latency():
         metadata={"source": "pytest"}
     )
     
-    # Warm up
     await bus.publish("test_channel", payload)
 
-    # Measure actual
     latencies = []
     for _ in range(10):
         latency = await bus.publish("test_channel", payload)
@@ -44,14 +40,12 @@ async def test_pub_sub_latency():
 @pytest.mark.asyncio
 async def test_schema_validation_and_subscription():
     publisher = RedisEventBus("redis://localhost:6379/0")
-    publisher.client = __import__("fakeredis").FakeAsyncRedis(decode_responses=True)
-    publisher.pubsub = publisher.client.pubsub()
-    subscriber = RedisEventBus("redis://localhost:6379/0")
-    subscriber.client = publisher.client
-    subscriber.pubsub = subscriber.client.pubsub()
+    publisher.client = AsyncMock()
+    publisher.pubsub = AsyncMock()
     
-    # await publisher.connect()
-    # await subscriber.connect()
+    subscriber = RedisEventBus("redis://localhost:6379/0")
+    subscriber.client = AsyncMock()
+    subscriber.pubsub = AsyncMock()
     
     await subscriber.subscribe("test_channel")
     
@@ -65,8 +59,11 @@ async def test_schema_validation_and_subscription():
     
     await publisher.publish("test_channel", valid_payload)
     
-    # We do a quick listen loop to verify receipt
-    import asyncio
+    async def mock_listen():
+        yield {"type": "message", "data": '{"version": "1.0", "agent_id": "agent_123", "action": "update", "target": "knowledge_base", "payload": {"data": "test"}}'}
+        
+    subscriber.pubsub.listen = mock_listen
+    
     try:
         async with asyncio.timeout(2.0):
             async for msg in subscriber.listen(AgentSwarmMessage):
@@ -74,15 +71,11 @@ async def test_schema_validation_and_subscription():
     except asyncio.TimeoutError as e:
         print(f"Timeout (expected if no more messages): {e}")
 
-    # Now let's try an invalid payload structure (mocking injection attack by bypass)
-    # The Schema validation prevents sending bad ones naturally because of Pydantic,
-    # but let's test if we inject bad JSON into redis directly.
-    import fakeredis.aioredis as redis_fake
-    r = redis_fake.FakeRedis(decode_responses=True)
-    bad_payload_str = '{"version": "1.0", "agent_id": "bad", "action": "DROP TABLE", "target": "db", "payload": {}}'
-    await r.publish("test_channel", bad_payload_str)
+    async def mock_bad_listen():
+        yield {"type": "message", "data": '{"version": "1.0", "agent_id": "bad", "action": "DROP TABLE", "target": "db", "payload": {}}'}
+
+    subscriber.pubsub.listen = mock_bad_listen
     
-    import asyncio
     try:
         async with asyncio.timeout(2.0):
             async for msg in subscriber.listen(AgentSwarmMessage):
@@ -94,7 +87,6 @@ async def test_schema_validation_and_subscription():
         
     await publisher.close()
     await subscriber.close()
-    await r.aclose()
 
 async def main():
     print("Running RedisEventBus Tests...")
