@@ -1,66 +1,78 @@
-import sys
-import os
-import uuid
 import json
-from typing import List, Dict, Any, Optional
-from pydantic import Field, field_validator
+import os
+import sys
+from datetime import datetime
+from typing import Any, Dict, List
+
 import asyncpg
 from pgvector.asyncpg import register_vector
-from datetime import datetime, timezone
+from pydantic import Field, field_validator
 
 # Adjust sys.path to allow imports from T1 and T2 sandboxes
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from omnimem.security_contract import BaseContractModel, ContractViolationError
 
+
 class DatabaseIntegrityError(ContractViolationError):
     """Raised when an asyncpg constraint or data error occurs, mapping it to a contract violation."""
+
     0
+
 
 class SemanticMemoryCreate(BaseContractModel):
     """Schema for creating a new semantic memory."""
+
     concept_name: str = Field(..., description="Name of the concept/entity")
     text_content: str = Field(..., description="Text content to be embedded")
     embedding: List[float] = Field(..., description="Vector embedding of the text (dimension 384)")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Arbitrary JSON metadata")
 
-    @field_validator('embedding')
+    @field_validator("embedding")
     @classmethod
     def validate_dimension(cls, v: List[float]) -> List[float]:
         if len(v) != 384:
             raise ContractViolationError(f"Embedding dimension must be exactly 384, got {len(v)}")
         return v
 
+
 class SemanticMemoryRecord(SemanticMemoryCreate):
     """Schema for a retrieved semantic memory record."""
+
     id: str = Field(..., description="UUID of the memory")
     created_at: datetime
     updated_at: datetime
 
+
 class EpisodicLogCreate(BaseContractModel):
     """Schema for logging a new episode."""
+
     agent_id: str = Field(..., description="ID of the agent generating the log")
     event_type: str = Field(..., description="Type/category of the event")
     event_content: str = Field(..., description="Textual description of the event")
     embedding: List[float] = Field(..., description="Vector embedding of the event (dimension 384)")
 
-    @field_validator('embedding')
+    @field_validator("embedding")
     @classmethod
     def validate_dimension(cls, v: List[float]) -> List[float]:
         if len(v) != 384:
             raise ContractViolationError(f"Embedding dimension must be exactly 384, got {len(v)}")
         return v
 
+
 class EpisodicLogRecord(EpisodicLogCreate):
     """Schema for a retrieved episodic log record."""
+
     id: str = Field(..., description="UUID of the episodic log")
     created_at: datetime
+
 
 class MemoryDB:
     """
     CRUD Abstraction layer for pgvector dense semantic memory and episodic logs.
     Handles connection pooling and vector type registration.
     """
+
     def __init__(self, pool: asyncpg.Pool):
         """
         Initialize with an asyncpg pool.
@@ -69,14 +81,15 @@ class MemoryDB:
         self.pool = pool
 
     @classmethod
-    async def create(cls, dsn: str) -> 'MemoryDB':
+    async def create(cls, dsn: str) -> "MemoryDB":
         """
         Create a new MemoryDB instance by initializing a connection pool.
         Uses an init callback to run `await register_vector(conn)` on every new connection.
         """
+
         async def init(conn):
             await register_vector(conn)
-            
+
         try:
             pool = await asyncpg.create_pool(dsn, init=init)
             if not pool:
@@ -94,7 +107,7 @@ class MemoryDB:
         """
         try:
             await self.pool.execute("CREATE EXTENSION IF NOT EXISTS vector;")
-            
+
             await self.pool.execute("""
                 CREATE TABLE IF NOT EXISTS semantic_memory (
                     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -106,7 +119,7 @@ class MemoryDB:
                     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
                 );
             """)
-            
+
             # Flaw 7 Fix: Idempotently add UNIQUE constraint after cleaning duplicates
             await self.pool.execute("""
                 DO $$
@@ -114,9 +127,9 @@ class MemoryDB:
                     IF NOT EXISTS (
                         SELECT 1 FROM pg_constraint WHERE conname = 'semantic_memory_concept_name_key'
                     ) THEN
-                        DELETE FROM semantic_memory a USING semantic_memory b 
+                        DELETE FROM semantic_memory a USING semantic_memory b
                         WHERE a.id < b.id AND a.concept_name = b.concept_name;
-                        
+
                         ALTER TABLE semantic_memory ADD CONSTRAINT semantic_memory_concept_name_key UNIQUE (concept_name);
                     END IF;
                 END;
@@ -127,7 +140,7 @@ class MemoryDB:
                 CREATE INDEX IF NOT EXISTS semantic_memory_embedding_idx
                 ON semantic_memory USING hnsw (embedding vector_cosine_ops);
             """)
-            
+
             await self.pool.execute("""
                 CREATE TABLE IF NOT EXISTS episodic_logs (
                     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -165,49 +178,56 @@ class MemoryDB:
         try:
             metadata_json = json.dumps(data.metadata)
             record_id = await self.pool.fetchval(
-                query, 
-                data.concept_name, 
-                data.text_content, 
-                data.embedding, 
-                metadata_json
+                query, data.concept_name, data.text_content, data.embedding, metadata_json
             )
             return str(record_id)
         except asyncpg.PostgresError as e:
             raise DatabaseIntegrityError(f"Error storing semantic memory: {str(e)}")
 
-    async def search_semantic_memory(self, query_embedding: List[float], limit: int = 5, max_distance: float = 0.6) -> List[SemanticMemoryRecord]:
+    async def search_semantic_memory(
+        self, query_embedding: List[float], limit: int = 5, max_distance: float = 0.6
+    ) -> List[SemanticMemoryRecord]:
         """
         Search for semantically similar memories using L2 distance or cosine similarity via HNSW index.
         Returns a list of SemanticMemoryRecord.
         Catches asyncpg exceptions and re-raises them as DatabaseIntegrityError.
         """
         if len(query_embedding) != 384:
-             raise ContractViolationError("Query embedding dimension must be exactly 384.")
+            raise ContractViolationError("Query embedding dimension must be exactly 384.")
 
         try:
             async with self.pool.acquire() as conn:
                 async with conn.transaction():
                     await conn.execute("SET LOCAL hnsw.ef_search = 1000;")
-                    rows = await conn.fetch("""
+                    rows = await conn.fetch(
+                        """
                         SELECT id, concept_name, text_content, embedding, metadata, created_at, updated_at
                         FROM semantic_memory
                         WHERE embedding <=> $1 < $3
                         ORDER BY embedding <=> $1
                         LIMIT $2;
-                    """, query_embedding, limit, max_distance)
-            
+                    """,
+                        query_embedding,
+                        limit,
+                        max_distance,
+                    )
+
             results = []
             for row in rows:
-                metadata = json.loads(row['metadata']) if isinstance(row['metadata'], str) else row['metadata']
-                results.append(SemanticMemoryRecord(
-                    id=str(row['id']),
-                    concept_name=row['concept_name'],
-                    text_content=row['text_content'],
-                    embedding=row['embedding'].to_list() if hasattr(row['embedding'], 'to_list') else [float(x) for x in str(row['embedding']).strip('[]').split(',')],
-                    metadata=metadata,
-                    created_at=row['created_at'],
-                    updated_at=row['updated_at']
-                ))
+                metadata = json.loads(row["metadata"]) if isinstance(row["metadata"], str) else row["metadata"]
+                results.append(
+                    SemanticMemoryRecord(
+                        id=str(row["id"]),
+                        concept_name=row["concept_name"],
+                        text_content=row["text_content"],
+                        embedding=row["embedding"].to_list()
+                        if hasattr(row["embedding"], "to_list")
+                        else [float(x) for x in str(row["embedding"]).strip("[]").split(",")],
+                        metadata=metadata,
+                        created_at=row["created_at"],
+                        updated_at=row["updated_at"],
+                    )
+                )
             return results
         except asyncpg.PostgresError as e:
             raise DatabaseIntegrityError(f"Error searching semantic memory: {str(e)}")
@@ -225,11 +245,7 @@ class MemoryDB:
         """
         try:
             record_id = await self.pool.fetchval(
-                query, 
-                data.agent_id, 
-                data.event_type, 
-                data.event_content, 
-                data.embedding
+                query, data.agent_id, data.event_type, data.event_content, data.embedding
             )
             return str(record_id)
         except asyncpg.PostgresError as e:
@@ -242,7 +258,7 @@ class MemoryDB:
         Catches asyncpg exceptions and re-raises them as DatabaseIntegrityError.
         """
         if len(query_embedding) != 384:
-             raise ContractViolationError("Query embedding dimension must be exactly 384.")
+            raise ContractViolationError("Query embedding dimension must be exactly 384.")
 
         query = """
             SELECT id, agent_id, event_type, event_content, embedding, created_at
@@ -254,14 +270,16 @@ class MemoryDB:
             rows = await self.pool.fetch(query, query_embedding, limit)
             results = []
             for row in rows:
-                results.append(EpisodicLogRecord(
-                    id=str(row['id']),
-                    agent_id=row['agent_id'],
-                    event_type=row['event_type'],
-                    event_content=row['event_content'],
-                    embedding=row['embedding'],
-                    created_at=row['created_at']
-                ))
+                results.append(
+                    EpisodicLogRecord(
+                        id=str(row["id"]),
+                        agent_id=row["agent_id"],
+                        event_type=row["event_type"],
+                        event_content=row["event_content"],
+                        embedding=row["embedding"],
+                        created_at=row["created_at"],
+                    )
+                )
             return results
         except asyncpg.PostgresError as e:
             raise DatabaseIntegrityError(f"Error searching episodes: {str(e)}")

@@ -1,38 +1,40 @@
-[build-system]
-requires = ["setuptools>=61.0.0", "wheel"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "omnimem"
 version = "1.0.0"
 description = "Omni-Mem Hybrid Memory Engine (PgVector, Neo4j, Redis, Celery)."
 readme = "README.md"
-requires-python = ">=3.10"
-license = { text = "MIT" }
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
 authors = [
     { name = "Axton Carroll" }
 ]
 dependencies = [
-    "fastapi",
-    "uvicorn",
-    "pydantic",
-    "celery",
-    "redis",
-    "neo4j",
-    "psycopg2-binary",
-    "pgvector",
-    "python-dotenv",
-    "asyncpg",
-    "PyYAML",
-    "requests",
-    "sentence-transformers"
+    "fastapi>=0.100.0",
+    "uvicorn>=0.22.0",
+    "pydantic>=2.0",
+    "celery>=5.3.0",
+    "redis>=4.6.0",
+    "neo4j>=5.10.0",
+    "psycopg2-binary>=2.9.0",
+    "pgvector>=0.2.0",
+    "python-dotenv>=1.0.0",
+    "asyncpg>=0.28.0",
+    "PyYAML>=6.0.0",
+    "requests>=2.31.0",
+    "sentence-transformers>=2.2.0"
 ]
 
-[project.optional-dependencies]
-test = [
-    "pytest",
-    "pytest-asyncio",
-    "fakeredis"
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "fakeredis>=2.14.0",
+    "ruff>=0.15.22",
+    "mypy>=1.15.0",
 ]
 
 [project.scripts]
@@ -40,3 +42,17 @@ omnimem = "omnimem.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["omnimem", "omnimem.*"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = false
+ignore_missing_imports = true
+warn_unused_configs = true

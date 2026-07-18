@@ -1,24 +1,18 @@
-import asyncio
 import json
 import time
-import sys
-import os
-from typing import AsyncGenerator, Dict, Any, Type
+from typing import AsyncGenerator, Type
 
-from omnimem.security_contract import (
-    SchemaValidator, 
-    BaseContractModel, 
-    ContractViolationError,
-    MemMCPHookPayload,
-    AgentSwarmMessage
-)
 import redis.asyncio as redis
+
+from omnimem.security_contract import BaseContractModel, ContractViolationError, SchemaValidator
+
 
 class RedisEventBus:
     """
     Ultra-low latency (< 5ms) event bus for cross-agent broadcast using Redis.
     Utilizes non-blocking operations and enforces versioned JSON schemas.
     """
+
     def __init__(self, redis_url: str = "redis://localhost:6379/0"):
         self.redis_url = redis_url
         self.pool = redis.ConnectionPool.from_url(redis_url, max_connections=50, decode_responses=True)
@@ -44,20 +38,20 @@ class RedisEventBus:
         Returns the latency in milliseconds.
         """
         start_time = time.perf_counter()
-        
+
         # Serialize the Pydantic model to JSON
         payload_str = message.model_dump_json()
-        
+
         # Non-blocking publish
         await self.client.publish(channel, payload_str)
-        
+
         end_time = time.perf_counter()
         latency_ms = (end_time - start_time) * 1000.0
-        
+
         if latency_ms > 5.0:
             # We log or handle violation of the latency constraint if strictly required
             0
-            
+
         return latency_ms
 
     async def subscribe(self, channel: str):
@@ -74,7 +68,7 @@ class RedisEventBus:
         """
         if not self._subscribed:
             raise RuntimeError("Must subscribe to a channel before listening.")
-            
+
         async for message in self.pubsub.listen():
             if message["type"] == "message":
                 try:
@@ -87,4 +81,3 @@ class RedisEventBus:
                 except ContractViolationError:
                     # Let contract violations bubble up per the API contract firewall
                     raise
-

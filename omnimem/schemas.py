@@ -1,6 +1,9 @@
+from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel, Field, ValidationError
-from typing import Optional, List, Dict, Any
+
 from omnimem.exceptions import ContractViolationError
+
 
 class EmbeddingRequest(BaseModel):
     # Backward compatible schemas: use defaults for new fields
@@ -9,11 +12,13 @@ class EmbeddingRequest(BaseModel):
     metadata: Optional[Dict[str, Any]] = Field(default_factory=dict)
     idempotency_key: Optional[str] = None
 
+
 class GraphAggregationRequest(BaseModel):
     node_id: str
     depth: int = Field(default=1)
     relationship_types: Optional[List[str]] = Field(default_factory=list)
     idempotency_key: Optional[str] = None
+
 
 def validate_payload(schema_class, payload: dict):
     try:

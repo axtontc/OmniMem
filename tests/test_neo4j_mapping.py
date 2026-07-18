@@ -1,5 +1,6 @@
-from omnimem.models import Entity, Relation, ProceduralKnowledge
+from omnimem.models import Entity, ProceduralKnowledge, Relation
 from omnimem.neo4j_mapping import Neo4jMappingLayer
+
 
 def test_entity():
     e = Entity(id="agent_123", label="Agent", properties={"name": "Alice", "role": "Analyzer"})
@@ -8,6 +9,7 @@ def test_entity():
     assert params["id"] == "agent_123"
     print("Entity test passed.")
 
+
 def test_relation():
     r = Relation(source_id="agent_123", target_id="task_456", type="ASSIGNED_TO", properties={"weight": 1.0})
     query, params = Neo4jMappingLayer.upsert_relation(r)
@@ -15,12 +17,13 @@ def test_relation():
     assert params["source_id"] == "agent_123"
     print("Relation test passed.")
 
+
 def test_procedural_knowledge():
     pk = ProceduralKnowledge(
         id="proc_login",
         name="System Login",
         steps=["Enter username", "Enter password", "Click Submit"],
-        properties={"critical": True}
+        properties={"critical": True},
     )
     query, params = Neo4jMappingLayer.upsert_procedural_knowledge(pk)
     assert "MERGE (p:ProceduralKnowledge {id: $id})" in query
@@ -28,6 +31,7 @@ def test_procedural_knowledge():
     assert "CREATE (current)-[:NEXT_STEP]->(next)" in query
     assert len(params["steps"]) == 3
     print("Procedural Knowledge test passed.")
+
 
 if __name__ == "__main__":
     test_entity()

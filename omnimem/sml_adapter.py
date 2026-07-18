@@ -1,7 +1,9 @@
-import yaml
 from enum import Enum
-from typing import List, Optional, Any, Dict
+from typing import List, Optional
+
+import yaml
 from pydantic import BaseModel, Field, ValidationError
+
 
 class SMLIntent(str, Enum):
     DELEGATE = "DELEGATE"
@@ -12,6 +14,7 @@ class SMLIntent(str, Enum):
     ACK = "ACK"
     EXECUTE_TASK = "EXECUTE_TASK"
 
+
 class SMLContext(BaseModel):
     files: Optional[List[str]] = None
     facts: Optional[List[str]] = None
@@ -20,9 +23,11 @@ class SMLContext(BaseModel):
     # Support arbitrary additional context fields that might be sent by Swarm-Lead
     model_config = {"extra": "allow"}
 
+
 class SMLConstraints(BaseModel):
     must: Optional[List[str]] = None
     must_not: Optional[List[str]] = None
+
 
 class SMLMessage(BaseModel):
     a2a_msg: str = "1.0"
@@ -34,9 +39,12 @@ class SMLMessage(BaseModel):
     constraints: Optional[SMLConstraints] = None
     expect: Optional[str] = None
 
+
 class SMLParseError(Exception):
     """Raised when SML YAML is malformed or violates schema constraints."""
+
     0
+
 
 class SMLAdapter:
     @staticmethod
@@ -51,7 +59,7 @@ class SMLAdapter:
                 yaml_content = yaml_content[3:]
             if yaml_content.endswith("```"):
                 yaml_content = yaml_content[:-3]
-            
+
             data = yaml.safe_load(yaml_content)
             if not isinstance(data, dict):
                 raise SMLParseError("YAML content must resolve to a dictionary.")
@@ -66,8 +74,8 @@ class SMLAdapter:
         """Serialize an SMLMessage object to a raw YAML string."""
         data = message.model_dump(exclude_none=True)
         # Convert intent Enum to string
-        if isinstance(data.get('intent'), Enum):
-            data['intent'] = data['intent'].value
-        
+        if isinstance(data.get("intent"), Enum):
+            data["intent"] = data["intent"].value
+
         yaml_str = yaml.dump(data, sort_keys=False, default_flow_style=False)
         return f"```yaml\n{yaml_str}```"

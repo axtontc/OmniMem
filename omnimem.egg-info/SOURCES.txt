@@ -13,7 +13,7 @@ omnimem/ingest_real_knowledge.py
 omnimem/ipc_wal.py
 omnimem/local_ingest.py
 omnimem/memory_router.py
-omnimem/mock_deps.py
+omnimem/models.py
 omnimem/neo4j_layer.py
 omnimem/neo4j_mapping.py
 omnimem/pgvector_layer.py

@@ -3,25 +3,23 @@ Name: omnimem
 Version: 1.0.0
 Summary: Omni-Mem Hybrid Memory Engine (PgVector, Neo4j, Redis, Celery).
 Author: Axton Carroll
-License: MIT
-Requires-Python: >=3.10
+License: Apache-2.0
+Requires-Python: >=3.11
 Description-Content-Type: text/markdown
 License-File: LICENSE
-Requires-Dist: fastapi
-Requires-Dist: uvicorn
-Requires-Dist: pydantic
-Requires-Dist: celery
-Requires-Dist: redis
-Requires-Dist: neo4j
-Requires-Dist: psycopg2-binary
-Requires-Dist: pgvector
-Requires-Dist: python-dotenv
-Requires-Dist: asyncpg
-Requires-Dist: PyYAML
-Requires-Dist: requests
-Provides-Extra: test
-Requires-Dist: pytest; extra == "test"
-Requires-Dist: pytest-asyncio; extra == "test"
+Requires-Dist: fastapi>=0.100.0
+Requires-Dist: uvicorn>=0.22.0
+Requires-Dist: pydantic>=2.0
+Requires-Dist: celery>=5.3.0
+Requires-Dist: redis>=4.6.0
+Requires-Dist: neo4j>=5.10.0
+Requires-Dist: psycopg2-binary>=2.9.0
+Requires-Dist: pgvector>=0.2.0
+Requires-Dist: python-dotenv>=1.0.0
+Requires-Dist: asyncpg>=0.28.0
+Requires-Dist: PyYAML>=6.0.0
+Requires-Dist: requests>=2.31.0
+Requires-Dist: sentence-transformers>=2.2.0
 Dynamic: license-file
 
 <div align="center">
@@ -37,6 +35,10 @@ Dynamic: license-file
   <img src="https://img.shields.io/badge/License-Non--Commercial-red?style=for-the-badge" alt="License" />
 </p>
 
+<p align="center">
+  <b>Tags:</b> <code>pgvector</code> <code>postgresql</code> <code>semantic-search</code> <code>memory-injection</code> <code>agentic-memory</code>
+</p>
+
 </div>
 
 ---
@@ -47,7 +49,7 @@ Dynamic: license-file
 
 Built on FastAPI and Celery, OmniMem ingests raw text, codebases, and massive datasets, instantly converting them into high-dimensional embeddings via `PgVector` while simultaneously linking their ontological relationships in `Neo4j`.
 
-### 🌟 Enterprise Features
+### 🌟 Features
 
 - **🛡️ Graph-Vector Hybrid Engine**: Query memories by semantic similarity (PgVector) AND relational taxonomy (Neo4j) for hallucination-free retrieval.
 - **⚡ High-Throughput Ingestion**: FastAPI gateway backed by a Redis/Celery asynchronous task queue capable of parsing gigabytes of raw knowledge.

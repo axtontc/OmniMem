@@ -1,6 +1,8 @@
 import re
-from typing import Tuple, Dict, Any, List
-from omnimem.models import Entity, Relation, ProceduralKnowledge, ContractViolationError
+from typing import Any, Dict, Tuple
+
+from omnimem.models import ContractViolationError, Entity, ProceduralKnowledge, Relation
+
 
 class Neo4jMappingLayer:
     """
@@ -28,16 +30,13 @@ class Neo4jMappingLayer:
         updating its properties and ensuring the correct label.
         """
         label = cls._sanitize_identifier(entity.label)
-        
+
         query = f"""
         MERGE (n:{label} {{id: $id}})
         SET n += $properties
         RETURN n.id AS id
         """
-        params = {
-            "id": entity.id,
-            "properties": entity.properties
-        }
+        params = {"id": entity.id, "properties": entity.properties}
         return query.strip(), params
 
     @classmethod
@@ -49,7 +48,7 @@ class Neo4jMappingLayer:
         then merge the relationship.
         """
         rel_type = cls._sanitize_identifier(relation.type)
-        
+
         query = f"""
         MATCH (src {{id: $source_id}})
         MATCH (tgt {{id: $target_id}})
@@ -57,11 +56,7 @@ class Neo4jMappingLayer:
         SET r += $properties
         RETURN type(r) AS rel_type
         """
-        params = {
-            "source_id": relation.source_id,
-            "target_id": relation.target_id,
-            "properties": relation.properties
-        }
+        params = {"source_id": relation.source_id, "target_id": relation.target_id, "properties": relation.properties}
         return query.strip(), params
 
     @classmethod
@@ -74,20 +69,20 @@ class Neo4jMappingLayer:
         # Using a fixed label for procedural knowledge
         proc_label = "ProceduralKnowledge"
         step_label = "ProcedureStep"
-        
+
         query = f"""
         MERGE (p:{proc_label} {{id: $id}})
         SET p.name = $name, p += $properties
-        
+
         WITH p
         // Clear existing steps to ensure idempotency and correct ordering on updates
         OPTIONAL MATCH (p)-[:HAS_STEP]->(existing_step:{step_label})
         DETACH DELETE existing_step
-        
+
         WITH p
         // If there are no steps, we just stop here but the procedure node is created
         WHERE size($steps) > 0
-        
+
         UNWIND $steps AS step_data
         CREATE (s:{step_label} {{
             id: p.id + '_step_' + toString(step_data.index),
@@ -95,11 +90,11 @@ class Neo4jMappingLayer:
             content: step_data.content
         }})
         CREATE (p)-[:HAS_STEP {{order: step_data.index}}]->(s)
-        
+
         WITH p, s
         ORDER BY s.index
         WITH p, collect(s) as step_nodes
-        
+
         // Link steps sequentially with NEXT relations (only if >1 step)
         // using WHERE to prevent issues with negative ranges
         CALL {{
@@ -109,20 +104,12 @@ class Neo4jMappingLayer:
             WITH step_nodes[i] AS current, step_nodes[i+1] AS next
             CREATE (current)-[:NEXT_STEP]->(next)
         }}
-        
+
         RETURN count(*) AS operations
         """
-        
+
         # Prepare step data with indices
-        steps_with_index = [
-            {"index": i, "content": step_content} 
-            for i, step_content in enumerate(proc.steps)
-        ]
-        
-        params = {
-            "id": proc.id,
-            "name": proc.name,
-            "properties": proc.properties,
-            "steps": steps_with_index
-        }
+        steps_with_index = [{"index": i, "content": step_content} for i, step_content in enumerate(proc.steps)]
+
+        params = {"id": proc.id, "name": proc.name, "properties": proc.properties, "steps": steps_with_index}
         return query.strip(), params
